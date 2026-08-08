@@ -1584,23 +1584,56 @@ https://github.com/PetchAuisui/travel_app.git
 
 1. `LayoutBuilder` ต่างกับ `MediaQuery` อย่างไร? มีหลักการเลือกใช้แต่ละแบบในสถานการณ์ใด?
 ```text
+- ความแตกต่าง:
+  * MediaQuery: ใช้ดูขนาดและข้อมูลของ "หน้าจออุปกรณ์ทั้งหมด" (Screen Size)
+  * LayoutBuilder: ใช้ดูขนาดของ "พื้นที่ที่ Widget ตัวแม่แบ่งมาให้" (Parent Constraints)
 
+- หลักการเลือกใช้:
+  * ใช้ MediaQuery เมื่อต้องการปรับโครงสร้างหน้าจอภาพรวมระดับ Page-level (เช่น จอมือถือแสดง BottomNavigationBar แต่จอ Tablet/Desktop สลับไปแสดง NavigationRail ด้านข้าง)
+  * ใช้ LayoutBuilder เมื่อต้องการให้ Widget ย่อยปรับการแสดงผลตามขนาดพื้นที่ของตัวมันเองระดับ Component-level (เช่น ในการ์ด ถ้ารับพื้นที่มาแคบให้วางรูปแบบแนวตั้ง แต่ถ้าพื้นที่กว้างให้วางรูปแบบแนวนอน)
 ```
 2. ทำไม Go Router ถึงใช้ `StatefulShellRoute` แทน `ShellRoute` ธรรมดา? ผลต่างเรื่อง State Management คืออะไร?
 ```text
+- เหตุผลที่ใช้:
+  เพราะแอปมีเมนูด้านล่าง (Bottom Navigation Bar) หลายแท็บ และต้องการให้ผู้ใช้สลับแท็บไปมาโดยที่ข้อมูล หน้า และตำแหน่งเดิมไม่หายไป
 
+- ผลต่างเรื่อง State Management:
+  * ShellRoute (ธรรมดา): เมื่อเปลี่ยนแท็บ หน้าเดิมจะถูก Dispose (ทำลายทิ้ง) และ Rebuild ใหม่เมื่อสลับกลับมา ทำให้ State, ข้อมูลที่กรอก หรือตำแหน่ง Scroll หายหมด
+  * StatefulShellRoute (IndexedStack): จะเก็บรักษา State, ข้อมูลในหน้า และ Navigation Stack ของแต่ละแท็บไว้แยกจากกัน (Keep-Alive) ทำให้เมื่อสลับแท็บกลับมา หน้าเดิมจะยังอยู่เหมือนเดิม ไม่ต้องโหลดใหม่ และกดย้อนกลับภายในแต่ละแท็บแยกกันได้
 ```
 3. ในโค้ด `DestinationCard` เหตุใดจึงใช้ `Expanded` ครอบ `Text` ชื่อ Destination ? จะเกิดอะไรขึ้นถ้าลบออก?
 ```text
+- เหตุผลที่ใช้:
+  ใน Row ของ DestinationCard มีชื่อสถานที่อยู่คู่กับราคา ($price/คืน) การใช้ Expanded ครอบ Text ชื่อสถานที่ เพื่อบังคับให้ข้อความชื่อสถานที่ขยายกินพื้นที่ที่เหลือทั้งหมดในแนวนอน และกำหนดขอบเขตความกว้างที่แน่นอน ทำให้คุณสมบัติ overflow: TextOverflow.ellipsis ทำงานได้ถูกต้องเมื่อชื่อสถานที่ยาวเกิน
 
+- หากลบออกจะเกิดอะไรขึ้น:
+  หากชื่อสถานที่ยาวมากๆ ตัว Text จะพยายามขยายความกว้างแบบไม่จำกัด (Unconstrained Width) จนดันราคากระเด็นหลุดขอบจอ และทำให้เกิดข้อผิดพลาด RenderFlex Overflowed (หน้าจอขึ้นแถบลายสีดำ-เหลือง)
 ```
 4. การส่งข้อมูลผ่าน `extra` ของ Go Router มีข้อจำกัดอะไรกรณี Deep Link / Web Refresh? และแก้ปัญหานี้ได้อย่างไร?
 ```text
+- ข้อจำกัด:
+  การส่งข้อมูลผ่าน extra เป็นการส่ง Object ผ่าน Memory ภายในแอปเท่านั้น ไม่ได้แนบไปกับ URL เมื่อผู้ใช้กด Refresh บนเว็บ หรือเปิดเข้ามาผ่าน Deep Link URL โดยตรง ค่า extra จะกลายเป็น null ทันที ทำให้หน้ารายละเอียดเกิด Null Exception (แอปพังหรือโหลดหน้าไม่ขึ้น)
 
+- วิธีแก้ปัญหา:
+  1. ส่ง ID ผ่าน Path Parameter เสมอ (เช่น /destinations/:id) เพื่อให้มีค่า ID ติดไปกับ URL
+  2. เขียนโค้ดแบบมี Fallback: ในหน้ารับ ให้เช็คว่าถ้า extra != null ให้ใช้ข้อมูลจาก extra ก่อนเพื่อความเร็ว แต่ถ้า extra == null (กรณี Refresh/Deep Link) ให้ดึง id จาก pathParameters ไปค้นหา/โหลดข้อมูลมาแสดงผลแทน
 ```
 5. วาด Navigation Hierarchy ของแอปนี้ (สามารถวาดบนกระดาษแล้วถ่ายรูปส่งได้)
 ```text
-
+GoRouter (Root Navigation)
+└── StatefulShellRoute.indexedStack (Bottom Navigation Wrapper)
+    ├── Branch 0 (Home): 
+    │   └── Path: '/'                     → HomeScreen
+    │
+    ├── Branch 1 (Explore): 
+    │   └── Path: '/explore'              → ExploreScreen
+    │       └── Path: 'destinations/:id'  → DestinationDetailScreen (Sub-route ใน Explore)
+    │
+    ├── Branch 2 (Saved): 
+    │   └── Path: '/saved'                → SavedScreen
+    │
+    └── Branch 3 (Profile): 
+        └── Path: '/profile'              → ProfileScreen
 ```
 ---
 
