@@ -1574,8 +1574,7 @@ GoRoute(
 
 ---
 ## Repository ของโครงงาน (GitHub)
-https://github.com/PetchAuisui/travel_app.git
-
+> https://github.com/PetchAuisui/week04-layout-navigation.git
 ---
 
 ## 📝 คำถามท้ายใบงาน
