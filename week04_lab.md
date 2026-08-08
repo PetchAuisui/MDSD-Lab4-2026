@@ -1437,21 +1437,33 @@ flutter devices
 
 | # | สิ่งที่ทดสอบ | ผลที่คาดหวัง | ผลจริง |
 |---|---|---|---|
-| 1 | เปิดแอป | เห็น Home Screen + Bottom Navigation Bar | |
-| 2 | กด Tab "สำรวจ" | เปลี่ยนไป Explore Screen แสดง Grid | |
-| 3 | พิมพ์ค้นหา "โตเกียว" | ผลการค้นหาเหลือเฉพาะโตเกียว | |
-| 4 | กดที่ Card ใด ๆ | เปิด Detail Screen พร้อมข้อมูลถูกต้อง | |
-| 5 | กด Back บน Detail | กลับมา Explore Screen | |
-| 6 | กด Tab "หน้าหลัก" | กลับหน้าหลัก โดยที่ Stack ใน Explore ยังไม่หาย | |
-| 7 | กดหัวใจบน Detail | Snackbar แจ้งบันทึกสำเร็จ | |
-| 8 | กด "จองเลย" บน Detail | Dialog แสดงการจองสำเร็จ | |
-| 9 | กด "กลับหน้าหลัก" ใน Dialog | Navigate กลับ Home | |
-| 10 | ปรับความกว้างหน้าจอ (ดูวิธีตาม Device ด้านล่าง) | Grid ปรับ Column Count ตาม M3 Breakpoint | |
-| 11 | Refresh หน้า Detail บน Chrome (กด `F5` ขณะอยู่ที่หน้ารายละเอียด) | ข้อมูล Destination ยังแสดงถูกต้อง ไม่ใช่ null/Error (Fallback ทำงาน) | |
-| 12 | เลื่อนดู Featured List แนวนอนบนหน้า Home (หลังทำ Checkpoint 4.3) | เห็นครบทุก Destination เลื่อนซ้าย-ขวาได้ลื่นไหล | |
-| 13 | พิมพ์ URL `/explore/destinations/999` ตรง ๆ (หลังทำ Checkpoint 5.1) | แสดงหน้า "ไม่พบข้อมูลที่ต้องการ" ไม่ใช่ Error สีแดง | |
-| 14 | กด Tab "เกี่ยวกับ" ที่เพิ่มใหม่ (หลังทำ Checkpoint 5.1) | เปลี่ยนไปหน้า AboutScreen ได้ | |
-| 15 | เทียบค่า `MediaQuery.size.width` กับ `constraints.maxWidth` (ตาม Checkpoint 4.1) | บันทึกค่าที่สังเกตได้และสรุปความแตกต่าง | |
+| 1 | เปิดแอป | เห็น Home Screen + Bottom Navigation Bar |✅|
+| 2 | กด Tab "สำรวจ" | เปลี่ยนไป Explore Screen แสดง Grid |✅|
+| 3 | พิมพ์ค้นหา "โตเกียว" | ผลการค้นหาเหลือเฉพาะโตเกียว |✅|
+| 4 | กดที่ Card ใด ๆ | เปิด Detail Screen พร้อมข้อมูลถูกต้อง |✅|
+| 5 | กด Back บน Detail | กลับมา Explore Screen |✅|
+| 6 | กด Tab "หน้าหลัก" | กลับหน้าหลัก โดยที่ Stack ใน Explore ยังไม่หาย |✅|
+| 7 | กดหัวใจบน Detail | Snackbar แจ้งบันทึกสำเร็จ |✅|
+| 8 | กด "จองเลย" บน Detail | Dialog แสดงการจองสำเร็จ |✅|
+| 9 | กด "กลับหน้าหลัก" ใน Dialog | Navigate กลับ Home |✅|
+| 10 | ปรับความกว้างหน้าจอ (ดูวิธีตาม Device ด้านล่าง) | Grid ปรับ Column Count ตาม M3 Breakpoint |✅|
+| 11 | Refresh หน้า Detail บน Chrome (กด `F5` ขณะอยู่ที่หน้ารายละเอียด) | ข้อมูล Destination ยังแสดงถูกต้อง ไม่ใช่ null/Error (Fallback ทำงาน) |✅|
+| 12 | เลื่อนดู Featured List แนวนอนบนหน้า Home (หลังทำ Checkpoint 4.3) | เห็นครบทุก Destination เลื่อนซ้าย-ขวาได้ลื่นไหล |✅|
+| 13 | พิมพ์ URL `/explore/destinations/999` ตรง ๆ (หลังทำ Checkpoint 5.1) | แสดงหน้า "ไม่พบข้อมูลที่ต้องการ" ไม่ใช่ Error สีแดง |✅|
+| 14 | กด Tab "เกี่ยวกับ" ที่เพิ่มใหม่ (หลังทำ Checkpoint 5.1) | เปลี่ยนไปหน้า AboutScreen ได้ |✅|
+| 15 | เทียบค่า `MediaQuery.size.width` กับ `constraints.maxWidth` (ตาม Checkpoint 4.1) | บันทึกค่าที่สังเกตได้และสรุปความแตกต่าง |✅|
+
+
+ตารางสรุปการเปรียบเทียบ `MediaQuery.size.width` กับ `LayoutBuilder constraints.maxWidth`
+
+| หัวข้อ | `MediaQuery.of(context).size.width` | `LayoutBuilder constraints.maxWidth` |
+|:---|:---|:---|
+| **1. ค่าที่สังเกตได้จริง** | • จอคอม: **`1112.0 dp`** (Cols: 4)<br>• จอมือถือ: **`410.0 dp`** (Cols: 2) | • จอคอม: **`1112.0 dp`** (Cols: 4)<br>• จอมือถือ: **`410.0 dp`** (Cols: 2) |
+| **2. ผลเปรียบเทียบค่า** | \multicolumn{2}{c|}{**เท่ากัน** ในหน้านี้ (เพราะ ExploreScreen วางขยายกว้างเต็มหน้าจออุปกรณ์)} |
+| **3. นิยาม / ความหมาย** | ความกว้างของ **"หน้าต่าง/หน้าจออุปกรณ์ทั้งหมด"** (Global Screen Width) | ความกว้างของ **"พื้นที่จริงที่ Parent จัดสรรให้"** (Local Available Width) |
+| **4. ขอบเขต (Scope)** | อิงตามขนาดหน้าจอแอปทั้งหมด (App / Window Level) | อิงตามขอบเขตของ Widget นั้น ๆ (Widget Level) |
+| **5. กรณีที่ค่า "ไม่เท่ากัน"** | มีค่ากว้างกว่าเสมอ แม้ Widget จะถูกบีบอยู่ในพื้นที่เล็ก ๆ | ได้ค่าความกว้างจริงที่ถูกต้อง เช่น เมื่ออยู่ใน **Split-view, Sidebar, Dialog, หรือมี Padding ล้อมรอบ** |
+| **6. ข้อแนะนำการใช้งาน** | เหมาะสำหรับเช็คภาพรวมทั้งหน้าจอ, Safe Area, การหมุนจอ (Orientation) หรือคีย์บอร์ด | **แนะนำสำหรับ Responsive UI และ Reusable Components** เพื่อให้การ์ด/กริดปรับตามพื้นที่ได้อัตโนมัติ |
 
 ---
 
@@ -1545,10 +1557,19 @@ GoRoute(
 > 💡 **หลีกเลี่ยงการขอโค้ดทั้งไฟล์จาก AI** ให้ลองเขียนเองก่อน ถ้าติดจริง ๆ ให้ถามเป็นจุด ๆ ไป (เช่น "ทำไม setState ใน Widget อื่นไม่ทำให้ Saved Screen รีเฟรช") จะได้เรียนรู้มากกว่าการคัดลอกมาทั้งหมด
 
 บันทึกรูปผลการทดลอง
-```image
-บันทึกรูปโค้ด และรูปผลการทดลองที่นี่ 
-```
+- หน้าหลัก
+<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/536b87fc-1cd4-45ca-8288-343b764c278d" />
+- สำรวจ
+<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/4300fddc-83a8-45c0-aa06-bac28dff165f" />
+- บันทึก
+<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/490e3095-362f-4310-8289-f9d1754a3afe" />
+- โปรไฟล์
+<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/01f5f68e-7bdb-4d8b-a732-1676dceefc87" />
+- เกี่ยวกับ
+<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/c61240d4-bfab-4be2-832c-ae362b091562" />
+
 ---
+## 
 
 ## 📝 คำถามท้ายใบงาน
 
