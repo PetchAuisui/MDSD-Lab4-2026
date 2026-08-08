@@ -1558,18 +1558,25 @@ GoRoute(
 
 บันทึกรูปผลการทดลอง
 - หน้าหลัก
-<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/536b87fc-1cd4-45ca-8288-343b764c278d" />
+<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/b639751b-a61c-4482-9c42-e67c5dd1767e" />
+
 - สำรวจ
-<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/4300fddc-83a8-45c0-aa06-bac28dff165f" />
+<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/d6e4282d-0b8f-46ab-a0da-564e1d086fd8" />
+
 - บันทึก
-<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/490e3095-362f-4310-8289-f9d1754a3afe" />
+<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/fcd44eed-f120-4a39-be7e-99428e1d4092" />
+
 - โปรไฟล์
-<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/01f5f68e-7bdb-4d8b-a732-1676dceefc87" />
+<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/53862ab1-caa0-4758-b4e9-cfe0d27ba02a" />
+
 - เกี่ยวกับ
-<img width="436" height="844" alt="image" src="https://github.com/user-attachments/assets/c61240d4-bfab-4be2-832c-ae362b091562" />
+<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/bdbb36a4-c2e8-420f-975e-a7a1706f45dc" />
 
 ---
-## 
+## Repository ของโครงงาน (GitHub)
+https://github.com/PetchAuisui/travel_app.git
+
+---
 
 ## 📝 คำถามท้ายใบงาน
 
