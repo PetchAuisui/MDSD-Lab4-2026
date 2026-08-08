@@ -1199,6 +1199,9 @@ class ProfileScreen extends StatelessWidget {
 }
 ```
 
+บันทึกรูปผลการทดลอง
+<img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/47e9ba1f-3c72-498f-b79a-e27b1cc94655" />
+
 ---
 
 ### การทดลองที่ 5 — ตั้งค่า Go Router
@@ -1353,9 +1356,7 @@ final GoRouter appRouter = GoRouter(
 > 3. ทดสอบ Fallback ที่แก้ไข โดยรันแอปบน Chrome (`flutter run -d chrome`) แล้วพิมพ์ URL `/explore/destinations/999` ตรง ๆ ใน Address Bar (เป็น `id` ที่ไม่มีอยู่จริง) — ต้องเห็นหน้า "ไม่พบข้อมูลที่ต้องการ" ไม่ใช่ Error สีแดงหรือข้อมูลผิดตัว
 
 บันทึกรูปผลการทดลอง
-```image
-บันทึกรูปโค้ด และรูปผลการทดลองที่นี่ (กรณีที่ยังไม่สามารถรันได้ ให้ทดลองจนถึงขั้นตอนที่สามารถ capture รูปได้และบันทึกรูปไว้ในส่วนนี้)
-```
+<img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/25dfc056-6ad6-425e-a07d-8bddde88ba58" />
 
 
 #### ขั้นตอนที่ 5.2 — ตั้งค่า main.dart
