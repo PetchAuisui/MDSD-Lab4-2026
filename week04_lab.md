@@ -483,7 +483,219 @@ class DestinationCard extends StatelessWidget {
 > 2. เพิ่ม `Row` ใหม่ใต้ Tags แสดงไอคอน `Icons.bed` พร้อมข้อความ "พร้อมเข้าพัก" โดยครอบข้อความด้วย `Expanded` เพื่อกันไม่ให้ล้นถ้าชื่อยาว
 > 3. เขียน Comment สั้น ๆ ในโค้ดของตัวเองอธิบายว่าทำไมต้องใช้ `Positioned` คู่กับ `Stack` ถึงจะย้ายตำแหน่ง Badge ได้ (ถ้าใช้ `Positioned` นอก `Stack` จะเกิดอะไรขึ้น)
 
-บันทึกรูปผลการทดลอง
+**บันทึกรูปผลการทดลอง**
+- Code
+```dart
+import 'package:flutter/material.dart';
+import '../models/destination.dart';
+
+class DestinationCard extends StatelessWidget {
+  final Destination destination;
+  final VoidCallback onTap;
+
+  const DestinationCard({
+    super.key,
+    required this.destination,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        // ── 1. Decoration: rounded corner + shadow ──────────────
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        // ── 2. ClipRRect ป้องกัน Image เกิน Rounded Corner ──────
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── 3. Stack: Image + Rating Badge + Favorite Button ──
+              Stack(
+                children: [
+                  // 3a. รูป Destination
+                  AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Image.network(
+                      destination.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, _) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.image_not_supported, size: 48),
+                      ),
+                    ),
+                  ),
+                  // 3b. Badge Rating (ซ้อนบนรูปขวาบน)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star, color: Colors.amber, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            destination.rating.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // 3c. ปุ่มบันทึก (Heart Icon บนการ์ดซ้ายบน)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: ValueListenableBuilder<Set<String>>(
+                      valueListenable: SavedManager.savedIds,
+                      builder: (context, savedIds, _) {
+                        final isSaved = savedIds.contains(destination.id);
+                        return GestureDetector(
+                          onTap: () {
+                            final newlySaved =
+                                SavedManager.toggle(destination.id);
+
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  newlySaved
+                                      ? 'บันทึก ${destination.name} แล้ว! ❤️'
+                                      : 'ยกเลิกการบันทึก ${destination.name} แล้ว',
+                                ),
+                                duration: const Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isSaved ? Icons.favorite : Icons.favorite_border,
+                              color:
+                                  isSaved ? Colors.pinkAccent : Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              // ── 4. Info Section ────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ชื่อและราคา
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            destination.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '\$${destination.price}/คืน',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // แสดงประเทศ
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          destination.country,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Tags
+                    Wrap(
+                      spacing: 6,
+                      children: destination.tags
+                          .map(
+                            (tag) => Chip(
+                              label: Text(
+                                tag,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              backgroundColor: Colors.blue.shade50,
+                              shape: const StadiumBorder(
+                                side: BorderSide(color: Colors.transparent),
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+- Screenshot Result
 <img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/51097618-c3f1-4a2b-8c44-4d3bf5c927b9" />
 
 ---
@@ -637,9 +849,249 @@ class _ExploreScreenState extends State<ExploreScreen> {
 > 1. เพิ่ม Breakpoint ระดับที่ 4 คือ **Large (≥ 1200 dp)** ให้ `crossAxisCount = 5`
 > 2. ใน `_buildGrid()` เพิ่มบรรทัด `final screenWidth = MediaQuery.of(context).size.width;` แล้วลองแสดงค่านี้เทียบกับ `constraints.maxWidth` ของ `LayoutBuilder` (เช่น พิมพ์ด้วย `print()` หรือแสดงเป็น `Text` ชั่วคราวบนหน้าจอ)
 > 3. สังเกตว่าค่าทั้งสองตัวเท่ากันหรือไม่ แล้วเขียนสรุป 2-3 บรรทัดเป็น Comment ในโค้ดว่า `MediaQuery.of(context).size.width` (ความกว้างของทั้งหน้าจอ) กับ `LayoutBuilder` `constraints.maxWidth` (ความกว้างที่ Widget นั้น ๆ ได้รับจาก Parent) ต่างกันอย่างไร และควรเลือกใช้ตัวไหนเมื่อไหร่
+**บันทึกรูปผลการทดลอง**
+- Code
+```dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../models/destination.dart';
+import '../widgets/destination_card.dart';
 
-บันทึกรูปผลการทดลอง
+class ExploreScreen extends StatefulWidget {
+  const ExploreScreen({super.key});
+
+  @override
+  State<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends State<ExploreScreen> {
+  String _searchQuery =
+      ''; // เก็บคำค้นหาปัจจุบัน อัปเดตทุกครั้งที่พิมพ์ใน TextField
+  String _selectedTag = 'ทั้งหมด';
+  final List<String> _allTags = [
+    'ทั้งหมด',
+    'ทะเล',
+    'ธรรมชาติ',
+    'วัฒนธรรม',
+    'อาหาร',
+    'ช้อปปิ้ง',
+  ];
+
+  // Getter คำนวณรายการที่ตรงกับคำค้นหาและ Tag Filter ที่เลือก
+  List<Destination> get _filteredDestinations {
+    return sampleDestinations.where((d) {
+      // เงื่อนไข Filter Tag
+      final matchesTag =
+          _selectedTag == 'ทั้งหมด' || d.tags.contains(_selectedTag);
+
+      // เงื่อนไข Search Query
+      final matchesSearch =
+          _searchQuery.isEmpty ||
+          d.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          d.country.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          d.tags.any(
+            (t) => t.toLowerCase().contains(_searchQuery.toLowerCase()),
+          );
+
+      return matchesTag && matchesSearch;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('สำรวจ'), centerTitle: false),
+      body: Column(
+        children: [
+          // ── Search Bar ──────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: TextField(
+              // ทุกครั้งที่พิมพ์ จะเรียก setState เพื่อบันทึกคำค้นหาใหม่
+              onChanged: (value) => setState(() => _searchQuery = value),
+              decoration: InputDecoration(
+                hintText: 'ค้นหา Destination...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Category Filter Chips (ขั้นตอนที่ 7.1) ────────────────
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _allTags.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final tag = _allTags[index];
+                final isSelected = tag == _selectedTag;
+                return FilterChip(
+                  label: Text(tag),
+                  selected: isSelected,
+                  onSelected: (_) => setState(() => _selectedTag = tag),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // ── Grid หรือ Empty State ────────────────────────────────
+          Expanded(
+            child: _filteredDestinations.isEmpty
+                ? _buildEmptyState()
+                : _buildGrid(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGrid() {
+    // ── LayoutBuilder: ปรับ Column Count ตามมาตรฐาน M3 Window Size Classes ──
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // ดึงความกว้างของทั้งหน้าจออุปกรณ์
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        // พิมพ์เปรียบเทียบค่าทั้งสองใน Console/Terminal
+        debugPrint(
+          'MediaQuery width: $screenWidth | LayoutBuilder maxWidth: ${constraints.maxWidth}',
+        );
+
+        // ─────────────────────────────────────────────────────────────────────────────
+        // สรุปความแตกต่างระหว่าง MediaQuery vs LayoutBuilder constraints:
+        // 1. MediaQuery.of(context).size.width คือความกว้างของ "ทั้งหน้าต่าง/หน้าจออุปกรณ์" ทั้งหมด
+        // 2. LayoutBuilder constraints.maxWidth คือความกว้างของ "พื้นที่จริงที่ Parent จัดสรรให้ Widget นั้น ๆ"
+        // 3. การเลือกใช้: ควรเลือกใช้ LayoutBuilder สำหรับการจัด Responsive Layout ของ Widget ที่ต้องการนำไปใช้ซ้ำ
+        //    (เช่น เมื่อ Widget อยู่ใน Split-view, Sidebar หรือ Dialog) และใช้ MediaQuery เมื่อต้องการอิงขนาดภาพรวมของหน้าจอ
+        // ─────────────────────────────────────────────────────────────────────────────
+
+        int crossAxisCount;
+        if (constraints.maxWidth < 600) {
+          crossAxisCount = 2; // Compact: Phone
+        } else if (constraints.maxWidth < 840) {
+          crossAxisCount = 3; // Medium: Tablet Portrait
+        } else if (constraints.maxWidth < 1200) {
+          crossAxisCount = 4; // Expanded: Tablet Landscape / Desktop
+        } else {
+          crossAxisCount = 5; // Large: Large Desktop (>= 1200 dp)
+        }
+
+        return Column(
+          children: [
+            // แสดง Text เปรียบเทียบค่าชั่วคราวบนหน้าจอ (เพื่อให้เห็นผลและแคปเจอร์รูปได้ชัดเจน)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'MediaQuery: ${screenWidth.toStringAsFixed(1)} dp',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'LayoutBuilder: ${constraints.maxWidth.toStringAsFixed(1)} dp',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Cols: $crossAxisCount',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio:
+                      0.65, // สัดส่วน Card width/height (ปรับเพื่อไม่ให้ล้น)
+                ),
+                itemCount: _filteredDestinations.length,
+                itemBuilder: (context, index) {
+                  final destination = _filteredDestinations[index];
+                  return DestinationCard(
+                    destination: destination,
+                    onTap: () {
+                      // เรียกใช้ Named Route แบบมี Type-safe parameters
+                      context.pushNamed(
+                        'destination-detail',
+                        pathParameters: {'id': destination.id},
+                        extra: destination,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text(
+            'ไม่พบ Destination ที่ค้นหา',
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _searchQuery.isNotEmpty
+                ? '"$_searchQuery"'
+                : 'ในหมวดหมู่ "$_selectedTag"',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+- Screenshot Result
 <img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/535584c2-4776-4fba-80f1-3ca810841a9e" />
+
 
 
 #### ขั้นตอนที่ 4.2 — Destination Detail Screen
@@ -1100,7 +1552,313 @@ class _StatCard extends StatelessWidget {
 > 2. เพิ่ม Section ใหม่ด้านล่าง Quick Stats ชื่อ "รีวิวยอดนิยม" ที่ใช้ `Column` ครอบ `ListView` แนวตั้งแบบ `shrinkWrap: true` และ `physics: NeverScrollableScrollPhysics()` แสดงชื่อ Destination 3 อันดับที่ `rating` สูงสุด (ต้องเขียน Logic Sort เอง)
 > 3. เขียน Comment อธิบายว่าทำไมต้องใส่ `shrinkWrap: true` และ `NeverScrollableScrollPhysics()` เมื่อวาง `ListView` ซ้อนอยู่ใน `Column` ที่อยู่ใน `SingleChildScrollView` อีกที (จะเกิดอะไรขึ้นถ้าไม่ใส่)
 
-บันทึกรูปผลการทดลอง
+**บันทึกรูปผลการทดลอง**
+- Code
+```dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../models/destination.dart';
+import '../widgets/destination_card.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. Featured Section: แสดง sampleDestinations ทั้งหมดใน ListView แนวนอน
+    final featured = sampleDestinations;
+
+    // 2. Logic Sort: เรียงลำดับ Destination ตาม rating จากมากไปน้อย แล้วตัดเอาเฉพาะ 3 อันดับแรก
+    final topRatedDestinations = List<Destination>.from(sampleDestinations)
+      ..sort((a, b) => b.rating.compareTo(a.rating));
+    final top3Rated = topRatedDestinations.take(3).toList();
+
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ──────────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'สวัสดี, นักเดินทาง! 👋',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const Text(
+                        'ไปไหนดีวันนี้?',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  CircleAvatar(
+                    backgroundColor: Colors.blue.shade100,
+                    child: const Icon(Icons.person, color: Colors.blue),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ── Featured Section ────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'แนะนำสำหรับคุณ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  TextButton(
+                    onPressed: () => context.go('/explore'),
+                    child: const Text('ดูทั้งหมด'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // ListView แนวนอน (แสดงครบทุกตัวใน sampleDestinations)
+              SizedBox(
+                height: 280,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: featured.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    final dest = featured[index];
+                    return SizedBox(
+                      width: 220,
+                      child: DestinationCard(
+                        destination: dest,
+                        onTap: () => context.pushNamed(
+                          'destination-detail',
+                          pathParameters: {'id': dest.id},
+                          extra: dest,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Quick Stats ─────────────────────────────────────
+              const Text(
+                'สถิติการเดินทาง',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.flight,
+                      label: 'Trip',
+                      value: '5',
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.place,
+                      label: 'Country',
+                      value: '3',
+                      color: Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ValueListenableBuilder<Set<String>>(
+                      valueListenable: SavedManager.savedIds,
+                      builder: (context, savedIds, _) {
+                        return _StatCard(
+                          icon: Icons.favorite,
+                          label: 'Saved',
+                          value: '${savedIds.length}',
+                          color: Colors.pink,
+                          onTap: () => context.go('/saved'),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── รีวิวยอดนิยม Section ────────────────────────────
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'รีวิวยอดนิยม',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ─────────────────────────────────────────────────────────────────────────
+                  // คำอธิบาย: ทำไมต้องใส่ shrinkWrap: true และ NeverScrollableScrollPhysics() ?
+                  //
+                  // 1. shrinkWrap: true
+                  //    - โดยปกติ ListView ในแนวตั้งจะพยายามขยายความสูงแบบไม่จำกัด (Unbounded Height / Infinity)
+                  //    - เมื่อวางอยู่ใน Column ที่อยู่ใต้ SingleChildScrollView อีกที Flutter จะไม่สามารถคำนวณขนาดความสูงได้
+                  //      และจะเกิด Error ทันที: "Vertical viewport was given unbounded height"
+                  //    - การใส่ shrinkWrap: true จะบังคับให้ ListView คำนวณความสูงให้พอดีกับความสูงรวมของ Item ทั้งหมดที่มีจริง
+                  //
+                  // 2. physics: const NeverScrollableScrollPhysics()
+                  //    - ปิดระบบการ Scroll ของ ListView ตัวใน เพื่อป้องกันปัญหา Scroll Contention (การแย่ง Scroll กันระหว่าง ListView ตัวใน กับ SingleChildScrollView ตัวนอก)
+                  //    - หากไม่ใส่ ตัว ListView ภายในจะพยายามดักจับ Scroll Gesture ทำให้หน้าจอติดขัดหรือ Scroll ซ้อนกันอย่างผิดปกติ
+                  //    - เมื่อใส่แล้ว หน้าจอทั้งหมดจะเลื่อนไปพร้อมกันอย่างราบรื่นผ่าน SingleChildScrollView ตัวนอกเพียงตัวเดียว
+                  // ─────────────────────────────────────────────────────────────────────────
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: top3Rated.length,
+                    itemBuilder: (context, index) {
+                      final dest = top3Rated[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              dest.imageUrl,
+                              width: 54,
+                              height: 54,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                width: 54,
+                                height: 54,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.image_not_supported, size: 24),
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            dest.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          subtitle: Row(
+                            children: [
+                              const Icon(Icons.location_on, size: 13, color: Colors.grey),
+                              const SizedBox(width: 2),
+                              Text('${dest.country} • \$${dest.price}/คืน'),
+                            ],
+                          ),
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.amber.shade200),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star, color: Colors.amber, size: 15),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${dest.rating}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          onTap: () => context.pushNamed(
+                            'destination-detail',
+                            pathParameters: {'id': dest.id},
+                            extra: dest,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// การ์ดแสดงสถิติตัวเลขเดียว (Trip / Country / Saved) — แยกเป็น Widget ของตัวเอง
+// เพื่อลดการเขียนโค้ดซ้ำ 3 รอบใน Row ด้านบน (DRY: Don't Repeat Yourself)
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(label, style: TextStyle(fontSize: 12, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+- Screenshot Result
 <img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/c160548a-860e-4b8a-99bf-d90f41a00cdf" />
 
 
@@ -1199,7 +1957,121 @@ class ProfileScreen extends StatelessWidget {
 }
 ```
 
-บันทึกรูปผลการทดลอง
+**บันทึกรูปผลการทดลอง**
+- Code
+```
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../models/destination.dart';
+import '../widgets/destination_card.dart';
+
+class SavedScreen extends StatelessWidget {
+  const SavedScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('บันทึกไว้'),
+      ),
+      body: ValueListenableBuilder<Set<String>>(
+        valueListenable: SavedManager.savedIds,
+        builder: (context, savedIds, _) {
+          final savedList = SavedManager.savedDestinations;
+
+          // ── Empty State: เมื่อยังไม่มีรายการบันทึก ───────────────────────
+          if (savedList.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.favorite, size: 64, color: Colors.pink.shade200),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'ยังไม่มีรายการที่บันทึก',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'กดไอคอนรูปหัวใจบนสถานที่ที่คุณชื่นชอบ\nเพื่อเก็บไว้ดูในหน้านี้',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // ─────────────────────────────────────────────────────────────────────────────
+          // 🎯 จุดที่ 2: Responsive Grid ด้วย LayoutBuilder ตาม Material 3 Breakpoints
+          //
+          // ❓ ทำไมไม่ใช้ MediaQuery?:
+          //    MediaQuery.size.width จะบอกขนาดของ "หน้าจออุปกรณ์ทั้งหมด" ซึ่งถ้าแอปไปเปิดใน 
+          //    Split-Screen หรือ Tablet ที่มี Sidebar ขนาดหน้าจอกับพื้นที่แสดงผลจะไม่เท่ากัน
+          //
+          // 💡 การทำงานของ LayoutBuilder:
+          //    LayoutBuilder จะส่งค่า `constraints.maxWidth` ซึ่งคือ "ความกว้างจริงของพื้นที่ Parent"
+          //    ทำให้เราคำนวณจำนวนคอลัมน์ (crossAxisCount) ได้อย่างแม่นยำและยืดหยุ่นกว่า:
+          //    - < 600 dp   (มือถือ / Compact)               -> แสดง 2 คอลัมน์
+          //    - 600-839 dp (แท็บเล็ตแนวตั้ง / Medium)        -> แสดง 3 คอลัมน์
+          //    - 840-1199 dp (แท็บเล็ตแนวนอน / Expanded)       -> แสดง 4 คอลัมน์
+          //    - >= 1200 dp (จอ Desktop ขนาดใหญ่ / Large)      -> แสดง 5 คอลัมน์
+          // ─────────────────────────────────────────────────────────────────────────────
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              // คำนวณจำนวน CrossAxisCount ตาม Breakpoints ของ Material 3
+              int crossAxisCount;
+              if (constraints.maxWidth < 600) {
+                crossAxisCount = 2; // Compact: มือถือ
+              } else if (constraints.maxWidth < 840) {
+                crossAxisCount = 3; // Medium: แท็บเล็ตแนวตั้ง
+              } else if (constraints.maxWidth < 1200) {
+                crossAxisCount = 4; // Expanded: แท็บเล็ตแนวนอน / หน้าจอแล็ปท็อป
+              } else {
+                crossAxisCount = 5; // Large: จอคอมพิวเตอร์ขนาดใหญ่
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.72,
+                ),
+                itemCount: savedList.length,
+                itemBuilder: (context, index) {
+                  final destination = savedList[index];
+                  return DestinationCard(
+                    destination: destination,
+                    onTap: () {
+                      context.pushNamed(
+                        'destination-detail',
+                        pathParameters: {'id': destination.id},
+                        extra: destination,
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+```
+- Screenshot Result
 <img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/47e9ba1f-3c72-498f-b79a-e27b1cc94655" />
 
 ---
@@ -1355,7 +2227,242 @@ final GoRouter appRouter = GoRouter(
 > 2. แก้ไข Fallback Logic ใน Route `destination-detail` จากเดิมที่ใช้ `orElse: () => sampleDestinations.first` (ซึ่งถ้าหา `id` ไม่เจอจะเด้งไปโชว์ข้อมูลผิดตัวแบบเงียบ ๆ โดยไม่แจ้งผู้ใช้) ให้เปลี่ยนไปแสดงหน้า "ไม่พบข้อมูลที่ต้องการ" แทน เมื่อหา `id` นั้นไม่เจอจริง ๆ
 > 3. ทดสอบ Fallback ที่แก้ไข โดยรันแอปบน Chrome (`flutter run -d chrome`) แล้วพิมพ์ URL `/explore/destinations/999` ตรง ๆ ใน Address Bar (เป็น `id` ที่ไม่มีอยู่จริง) — ต้องเห็นหน้า "ไม่พบข้อมูลที่ต้องการ" ไม่ใช่ Error สีแดงหรือข้อมูลผิดตัว
 
-บันทึกรูปผลการทดลอง
+**บันทึกรูปผลการทดลอง**
+- Code
+```dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../models/destination.dart';
+import '../screens/home_screen.dart';
+import '../screens/explore_screen.dart';
+import '../screens/destination_detail_screen.dart';
+import '../screens/saved_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/about_screen.dart';
+
+// ── Scaffold Shell Wrapper ─────────────────────────────────────────
+class ScaffoldWithNavBar extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
+
+  const ScaffoldWithNavBar({super.key, required this.navigationShell});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: navigationShell, // แสดง Content ของ active branch
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) {
+          // goBranch เปลี่ยนไป Branch (Tab) ที่เลือก โดยที่ Stack ของ Branch อื่น ๆ ยังอยู่ครบ
+          // initialLocation: true จะรีเซ็ต Branch นั้นกลับไปหน้าแรกสุดเมื่อกด Tab เดิมซ้ำ
+          navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          );
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'หน้าหลัก',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(Icons.explore),
+            label: 'สำรวจ',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.favorite_outline),
+            selectedIcon: Icon(Icons.favorite),
+            label: 'บันทึก',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'โปรไฟล์',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.info_outline),
+            selectedIcon: Icon(Icons.info),
+            label: 'เกี่ยวกับ',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Router Definition ──────────────────────────────────────────────
+final GoRouter appRouter = GoRouter(
+  initialLocation: '/',
+  debugLogDiagnostics: true,
+  routes: [
+    // StatefulShellRoute.indexedStack ช่วยรักษาสภาพ State ของแต่ละ Tab
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        return ScaffoldWithNavBar(navigationShell: navigationShell);
+      },
+      branches: [
+        // ── Branch 0: Home ──────────────────────────────────────
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/',
+              name: 'home',
+              builder: (context, state) => const HomeScreen(),
+            ),
+          ],
+        ),
+        // ── Branch 1: Explore + Detail ──────────────────────────
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/explore',
+              name: 'explore',
+              builder: (context, state) => const ExploreScreen(),
+              routes: [
+                // ─────────────────────────────────────────────────────────────────────────────
+                // 🎯 จุดที่ 3: Routing, CustomTransitionPage & การจัดการ Fallback Data
+                //
+                // 💡 การทำงาน:
+                // 1. รับข้อมูลได้ 2 รูปแบบ:
+                //    - `state.extra`: กรณีผู้ใช้คลิกจากหน้าจอ (ได้ Object ทันที ไม่ต้อง query ซ้ำ)
+                //    - `state.pathParameters['id']`: รองรับผู้ใช้พิมพ์ URL บนเว็บตรง ๆ หรือเปิดจาก Deep Link
+                // 2. Fallback Error Screen: หากค้นหา ID ไม่พบ (เช่น /destinations/999) จะแสดง
+                //    หน้า "ไม่พบข้อมูลที่ต้องการ" ที่สวยงาม แทนที่จะเกิด Red Screen of Death
+                // 3. CustomTransitionPage: ใช้ SlideTransition เลื่อนหน้าจอเข้ามาจากขวาไปซ้าย
+                //    (Offset(1.0, 0.0) -> Offset.zero) พร้อม Curves.easeInOut เพื่อความนุ่มนวล
+                // ─────────────────────────────────────────────────────────────────────────────
+                GoRoute(
+                  path: 'destinations/:id', // Sub-route path ไม่ต้องมี / นำหน้า
+                  name: 'destination-detail',
+                  pageBuilder: (context, state) {
+                    final id = state.pathParameters['id'];
+                    final extraDest = state.extra as Destination?;
+
+                    // ค้นหา Destination ตาม id ใน sampleDestinations (ถ้าไม่มี extra)
+                    final destination = extraDest ??
+                        sampleDestinations.cast<Destination?>().firstWhere(
+                          (d) => d?.id == id,
+                          orElse: () => null,
+                        );
+
+                    final Widget screenWidget;
+                    // 🎯 Checkpoint 5.1: ถ้าหา id ไม่เจอจริง ๆ ให้แสดงหน้า "ไม่พบข้อมูลที่ต้องการ"
+                    if (destination == null) {
+                      screenWidget = Scaffold(
+                        appBar: AppBar(title: const Text('ไม่พบข้อมูล')),
+                        body: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: Colors.orange.shade400,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'ไม่พบข้อมูลที่ต้องการ (ID: $id)',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'สถานที่ท่องเที่ยวนี้อาจถูกลบหรือไม่มีอยู่ในระบบ',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 24),
+                                ElevatedButton.icon(
+                                  onPressed: () => context.go('/explore'),
+                                  icon: const Icon(Icons.arrow_back),
+                                  label: const Text('กลับสู่หน้าสำรวจ'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    } else {
+                      screenWidget =
+                          DestinationDetailScreen(destination: destination);
+                    }
+
+                    // ขั้นตอนที่ 7.2: เพิ่ม Transition Animation (SlideTransition สไลด์จากขวามาซ้าย)
+                    return CustomTransitionPage(
+                      key: state.pageKey,
+                      child: screenWidget,
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(1.0, 0.0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeInOut,
+                            ),
+                          ),
+                          child: child,
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        // ── Branch 2: Saved ─────────────────────────────────────
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/saved',
+              name: 'saved',
+              builder: (context, state) => const SavedScreen(),
+            ),
+          ],
+        ),
+        // ── Branch 3: Profile ───────────────────────────────────
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/profile',
+              name: 'profile',
+              builder: (context, state) => const ProfileScreen(),
+            ),
+          ],
+        ),
+        // ── Branch 4: About ─────────────────────────────────────
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/about',
+              name: 'about',
+              builder: (context, state) => const AboutScreen(),
+            ),
+          ],
+        ),
+      ],
+    ),
+  ],
+  // errorBuilder ทำงานเมื่อ URL ที่ไปไม่ตรงกับ Route ใดเลยในระบบ (เช่นพิมพ์ Path ผิด)
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(child: Text('ไม่พบหน้าที่ต้องการ: ${state.error}')),
+  ),
+);
+```
+- Screenshot Result
 <img width="1470" height="956" alt="image" src="https://github.com/user-attachments/assets/25dfc056-6ad6-425e-a07d-8bddde88ba58" />
 
 
@@ -1558,19 +2665,19 @@ GoRoute(
 
 บันทึกรูปผลการทดลอง
 - หน้าหลัก
-<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/b639751b-a61c-4482-9c42-e67c5dd1767e" />
+<img width="421" height="850" alt="image" src="https://github.com/user-attachments/assets/5d7190ad-d4f4-447f-90af-ef7386770077" />
 
 - สำรวจ
-<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/d6e4282d-0b8f-46ab-a0da-564e1d086fd8" />
+<img width="421" height="850" alt="image" src="https://github.com/user-attachments/assets/36c47d00-b67e-4247-a7e9-7510b144f2cb" />
 
 - บันทึก
-<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/fcd44eed-f120-4a39-be7e-99428e1d4092" />
+<img width="421" height="850" alt="image" src="https://github.com/user-attachments/assets/da307396-f6c8-4941-a604-a91763aac213" />
 
 - โปรไฟล์
-<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/53862ab1-caa0-4758-b4e9-cfe0d27ba02a" />
+<img width="421" height="850" alt="image" src="https://github.com/user-attachments/assets/4cbcb8ab-2d29-49fd-994b-c9f15d47ec0b" />
 
 - เกี่ยวกับ
-<img width="435" height="843" alt="image" src="https://github.com/user-attachments/assets/bdbb36a4-c2e8-420f-975e-a7a1706f45dc" />
+<img width="421" height="850" alt="image" src="https://github.com/user-attachments/assets/6647eaa9-8d80-4083-8efd-221bbcfad5e5" />
 
 ---
 ## Repository ของโครงงาน (GitHub)
